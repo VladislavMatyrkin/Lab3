@@ -9,6 +9,7 @@ import java.text.NumberFormat;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.JCheckBox;
 import javax.swing.table.TableCellRenderer;
 public class GornerTableCellRenderer implements TableCellRenderer {
     private JPanel panel = new JPanel();
@@ -31,7 +32,7 @@ public class GornerTableCellRenderer implements TableCellRenderer {
 // Россия/Беларусь дробная часть отделяется запятой
         DecimalFormatSymbols dottedDouble =
                 formatter.getDecimalFormatSymbols();
-        dottedDouble.setDecimalSeparator('.');
+        dottedDouble.setDecimalSeparator(',');
         formatter.setDecimalFormatSymbols(dottedDouble);
 // Разместить надпись внутри панели
         panel.add(label);
@@ -40,24 +41,41 @@ public class GornerTableCellRenderer implements TableCellRenderer {
     }
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-// Преобразовать double в строку с помощью форматировщика
-        String formattedDouble = formatter.format(value);
-// Установить текст надписи равным строковому представлению числа
-        label.setText(formattedDouble);
-        if (col==1 && needle!=null && needle.equals(formattedDouble)) {
-// Номер столбца = 1 (т.е. второй столбец) + иголка не null
-// (значит что-то ищем) +
-// значение иголки совпадает со значением ячейки таблицы -
-// окрасить задний фон панели в красный цвет
-            panel.setBackground(Color.RED);
-        } else {
-// Иначе - в обычный белый
+        if (col == 2) {
+            JCheckBox checkBox = new JCheckBox();
+            checkBox.setSelected((Boolean) value);
+            checkBox.setHorizontalAlignment(JLabel.CENTER);
+            return checkBox;
+        }
+
+        if (value == null) {
+            label.setText("");
             panel.setBackground(Color.WHITE);
+        } else {
+            String formattedDouble = formatter.format(value);
+            label.setText(formattedDouble);
+
+            if (col == 0 && needle != null && needle.equals(formattedDouble)) {
+                panel.setBackground(Color.RED);// Если значение совпадает с needle
+            } else {
+                panel.setBackground(Color.WHITE);//Белый фон по умолчанию
+                if (col == 1 && value instanceof Double) {
+                    Double result = (Double) value;
+                    String[] parts = String.valueOf(result).split("\\,");
+                    if (parts.length > 1 && parts[0].equals(parts[1]) && !result.equals(0.0)) {
+                        panel.setBackground(Color.GREEN);
+                    } else {
+                        panel.setBackground(Color.WHITE);
+                    }
+                } else {
+                    panel.setBackground(Color.WHITE);
+                }
+            }
         }
         return panel;
     }
+    // Установка значения для поиска
     public void setNeedle(String needle) {
         this.needle = needle;
     }
 }
-
